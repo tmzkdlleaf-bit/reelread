@@ -32,7 +32,7 @@ export default function WorkCard({ work, t, acc, movieColor, bookColor, animeCol
   const tc = work.type === 'movie' ? movieColor : work.type === 'book' ? bookColor : animeColor
   const pc = POSTER_COLORS[work.colorIndex % POSTER_COLORS.length]
   const myReview = reviews.find(r => r.userId === currentUser?.uid)
-  const isMyWork = work.addedBy === currentUser?.uid
+  const isMyWork = !work.addedBy || work.addedBy === currentUser?.uid
 
   const handleSubmit = async () => {
     if (!score) return alert('별점을 선택해주세요')

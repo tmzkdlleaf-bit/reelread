@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { onAuthStateChanged } from 'firebase/auth'
+import { onAuthStateChanged, getRedirectResult } from 'firebase/auth'
 import {
   collection, onSnapshot, addDoc, updateDoc, doc, deleteDoc,
   query, where,
@@ -48,6 +48,8 @@ export default function App() {
 
   // Auth
   useEffect(() => {
+    // 리디렉트 로그인 결과 처리
+    getRedirectResult(auth).catch(() => {})
     return onAuthStateChanged(auth, u => setUser(u))
   }, [])
 
