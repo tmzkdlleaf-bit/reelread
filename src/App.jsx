@@ -7,6 +7,7 @@ import {
 import { auth, db } from './lib/firebase'
 import { THEMES, ACC_LIST, POSTER_COLORS } from './lib/theme'
 import { subscribeMyGroups } from './lib/groups'
+import { getGroupProfile } from './lib/groupProfile'
 import './index.css'
 
 import LoginPage from './pages/LoginPage'
@@ -103,11 +104,15 @@ export default function App() {
   const handleAddReview = async (workId, { score, text }) => {
     const workRef = doc(db, 'works', workId)
     const work = works.find(w => w.id === workId)
+    // 그룹 프로필 우선 사용
+    const groupProfile = await getGroupProfile(currentGroup.id, user.uid)
+    const userName = groupProfile?.name || user.displayName || user.email
+    const userPhoto = groupProfile?.photoURL || user.photoURL
     const reviews = (work?.reviews || []).filter(r => r.userId !== user.uid)
     reviews.unshift({
       userId: user.uid,
-      userName: user.displayName || user.email,
-      userPhoto: user.photoURL,
+      userName,
+      userPhoto,
       score, text,
       createdAt: Date.now(),
     })
