@@ -117,20 +117,19 @@ export default function App() {
     const reviews = (work?.reviews || []).filter(r => r.userId !== user.uid)
     await updateDoc(workRef, { reviews })
   }
+
+  const handleAddReview = async (workId, { score, text }) => {
     const workRef = doc(db, 'works', workId)
     const work = works.find(w => w.id === workId)
-    // 그룹 프로필 우선 사용
-    const groupProfile = await getGroupProfile(currentGroup.id, user.uid)
-    const userName = groupProfile?.name || user.displayName || user.email
-    const userPhoto = groupProfile?.photoURL || user.photoURL
+    let userName = user.displayName || user.email
+    let userPhoto = user.photoURL
+    try {
+      const groupProfile = await getGroupProfile(currentGroup.id, user.uid)
+      if (groupProfile?.name) userName = groupProfile.name
+      if (groupProfile?.photoURL) userPhoto = groupProfile.photoURL
+    } catch (e) {}
     const reviews = (work?.reviews || []).filter(r => r.userId !== user.uid)
-    reviews.unshift({
-      userId: user.uid,
-      userName,
-      userPhoto,
-      score, text,
-      createdAt: Date.now(),
-    })
+    reviews.unshift({ userId: user.uid, userName, userPhoto, score, text, createdAt: Date.now() })
     await updateDoc(workRef, { reviews })
   }
 

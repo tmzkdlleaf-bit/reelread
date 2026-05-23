@@ -24,6 +24,7 @@ export default function WorkCard({ work, t, acc, movieColor, bookColor, animeCol
   const [hoverStar, setHoverStar] = useState(0)
   const [editTitle, setEditTitle] = useState(work.title)
   const [editCreator, setEditCreator] = useState(work.creator)
+  const [showZoom, setShowZoom] = useState(false)
   const [uploadingCover, setUploadingCover] = useState(false)
   const coverInputRef = useRef()
 
@@ -32,7 +33,7 @@ export default function WorkCard({ work, t, acc, movieColor, bookColor, animeCol
   const tc = work.type === 'movie' ? movieColor : work.type === 'book' ? bookColor : animeColor
   const pc = POSTER_COLORS[work.colorIndex % POSTER_COLORS.length]
   const myReview = reviews.find(r => r.userId === currentUser?.uid)
-  const isMyWork = true // 임시: 모든 사람에게 버튼 표시
+  const isMyWork = work.addedBy === currentUser?.uid
   const typeLabel = work.type === 'movie' ? '영화' : work.type === 'book' ? '책' : '애니'
 
   const handleSubmit = async () => {
@@ -77,10 +78,10 @@ export default function WorkCard({ work, t, acc, movieColor, bookColor, animeCol
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, padding: '18px 20px 14px', background: t.bg }}>
 
-        {/* Poster */}
+        {/* Poster — 클릭하면 확대 */}
         <div
-          onClick={() => coverInputRef.current?.click()}
-          style={{ width: 52, height: 76, borderRadius: 5, flexShrink: 0, position: 'relative', overflow: 'hidden', cursor: isMyWork ? 'pointer' : 'default' }}
+          onClick={() => work.coverUrl && setShowZoom(true)}
+          style={{ width: 52, height: 76, borderRadius: 5, flexShrink: 0, position: 'relative', overflow: 'hidden', cursor: work.coverUrl ? 'zoom-in' : 'default' }}
         >
           {work.coverUrl ? (
             <img src={work.coverUrl} alt={work.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
@@ -90,15 +91,6 @@ export default function WorkCard({ work, t, acc, movieColor, bookColor, animeCol
               {uploadingCover
                 ? <div style={{ width: 16, height: 16, border: '2px solid currentColor', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin .8s linear infinite' }} />
                 : work.title.slice(0, 2)
-              }
-            </div>
-          )}
-          {/* 카메라 아이콘 — 내 작품이고 커버 있을 때만 오버레이 */}
-          {isMyWork && work.coverUrl && (
-            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {uploadingCover
-                ? <div style={{ width: 16, height: 16, border: '2px solid white', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin .8s linear infinite' }} />
-                : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
               }
             </div>
           )}
@@ -136,6 +128,15 @@ export default function WorkCard({ work, t, acc, movieColor, bookColor, animeCol
                   >
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
                     커버
+                  </button>
+                )}
+                {isMyWork && work.coverUrl && (
+                  <button
+                    onClick={() => coverInputRef.current?.click()}
+                    style={{ background: 'none', border: 'none', color: t.muted, cursor: 'pointer', padding: 0, fontSize: 11, display: 'flex', alignItems: 'center', gap: 3 }}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                    커버 변경
                   </button>
                 )}
               </div>
@@ -235,6 +236,25 @@ export default function WorkCard({ work, t, acc, movieColor, bookColor, animeCol
         </div>
       )}
       <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+
+      {/* 이미지 확대 팝업 */}
+      {showZoom && work.coverUrl && (
+        <div
+          onClick={() => setShowZoom(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'zoom-out' }}
+        >
+          <img
+            src={work.coverUrl}
+            alt={work.title}
+            style={{ maxWidth: '90vw', maxHeight: '85vh', borderRadius: 8, objectFit: 'contain', boxShadow: '0 8px 40px rgba(0,0,0,0.6)' }}
+            onClick={e => e.stopPropagation()}
+          />
+          <button
+            onClick={() => setShowZoom(false)}
+            style={{ position: 'absolute', top: 20, right: 20, background: 'rgba(255,255,255,0.15)', border: 'none', color: 'white', width: 36, height: 36, borderRadius: '50%', fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >✕</button>
+        </div>
+      )}
     </div>
   )
 }
