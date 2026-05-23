@@ -2,13 +2,15 @@ import { useState, useEffect } from 'react'
 import { onAuthStateChanged } from 'firebase/auth'
 import {
   collection, onSnapshot, addDoc, updateDoc, doc,
-  query, orderBy,
+  query, orderBy, where,
 } from 'firebase/firestore'
 import { auth, db } from './lib/firebase'
 import { THEMES, ACC_LIST, POSTER_COLORS } from './lib/theme'
+import { subscribeMyGroups } from './lib/groups'
 import './index.css'
 
 import LoginPage from './pages/LoginPage'
+import GroupLobby from './pages/GroupLobby'
 import FeedPage from './pages/FeedPage'
 import MembersPage from './pages/MembersPage'
 import CreatorsPage from './pages/CreatorsPage'
@@ -23,6 +25,8 @@ const STORAGE = {
 
 export default function App() {
   const [user, setUser] = useState(undefined)
+  const [groups, setGroups] = useState([])
+  const [currentGroup, setCurrentGroup] = useState(null)
   const [works, setWorks] = useState([])
   const [view, setView] = useState('feed')
   const [filter, setFilter] = useState('all')
@@ -40,19 +44,36 @@ export default function App() {
   const t = THEMES[theme]
   const acc = ACC_LIST[accIdx]
 
+  // Auth
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, u => setUser(u))
-    return unsub
+    return onAuthStateChanged(auth, u => setUser(u))
   }, [])
 
+  // My groups
   useEffect(() => {
     if (!user) return
-    const q = query(collection(db, 'works'), orderBy('createdAt', 'desc'))
-    const unsub = onSnapshot(q, snap => {
+    return subscribeMyGroups(user.uid, setGroups)
+  }, [user])
+
+  // Works for current group
+  useEffect(() => {
+    if (!user || !currentGroup) return
+    const q = query(
+      collection(db, 'works'),
+      where('groupId', '==', currentGroup.id),
+      orderBy('createdAt', 'desc')
+    )
+    return onSnapshot(q, snap => {
       setWorks(snap.docs.map(d => ({ id: d.id, ...d.data() })))
     })
-    return unsub
-  }, [user])
+  }, [user, currentGroup])
+
+  // Sync currentGroup data from groups list (for member updates etc)
+  useEffect(() => {
+    if (!currentGroup) return
+    const updated = groups.find(g => g.id === currentGroup.id)
+    if (updated) setCurrentGroup(updated)
+  }, [groups])
 
   useEffect(() => { STORAGE.set('theme', theme) }, [theme])
   useEffect(() => { STORAGE.set('accIdx', accIdx) }, [accIdx])
@@ -69,6 +90,7 @@ export default function App() {
     await addDoc(collection(db, 'works'), {
       type, title, creator, colorIndex,
       reviews: [],
+      groupId: currentGroup.id,
       createdAt: Date.now(),
       addedBy: user.uid,
     })
@@ -82,13 +104,13 @@ export default function App() {
       userId: user.uid,
       userName: user.displayName || user.email,
       userPhoto: user.photoURL,
-      score,
-      text,
+      score, text,
       createdAt: Date.now(),
     })
     await updateDoc(workRef, { reviews })
   }
 
+  // Loading
   if (user === undefined) {
     return (
       <div style={{ minHeight: '100vh', background: '#0d0d0f', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -97,8 +119,16 @@ export default function App() {
     )
   }
 
-  if (!user) {
-    return <LoginPage t={t} acc={acc} />
+  if (!user) return <LoginPage t={t} acc={acc} />
+
+  // Group lobby (그룹 미선택)
+  if (!currentGroup) {
+    return (
+      <GroupLobby
+        user={user} groups={groups} t={t} acc={acc}
+        onSelectGroup={g => { setCurrentGroup(g); setWorks([]); setView('feed') }}
+      />
+    )
   }
 
   const pillStyle = (active) => ({
@@ -121,32 +151,44 @@ export default function App() {
     <div style={{ maxWidth: 680, margin: '0 auto', minHeight: '100vh', display: 'flex', flexDirection: 'column', background: t.bg }}>
 
       {/* Topbar */}
-      <div style={{ background: t.bg, borderBottom: `0.5px solid ${t.line}`, padding: '12px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, position: 'sticky', top: 0, zIndex: 50 }}>
-        <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 18, color: t.text, flexShrink: 0 }}>
-          reel<span style={{ color: acc.c }}>&</span>read
+      <div style={{ background: t.bg, borderBottom: `0.5px solid ${t.line}`, padding: '10px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, position: 'sticky', top: 0, zIndex: 50 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+          {/* Back to groups */}
+          <button
+            onClick={() => setCurrentGroup(null)}
+            style={{ width: 28, height: 28, borderRadius: 7, border: `0.5px solid ${t.iconBorder}`, background: 'transparent', color: t.iconColor, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, padding: 0 }}
+            title="그룹 목록"
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M10 4l-4 4 4 4"/></svg>
+          </button>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 16, color: t.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {currentGroup.name}
+            </div>
+            <div style={{ fontSize: 11, color: t.muted }}>멤버 {currentGroup.members?.length || 0}명</div>
+          </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ display: 'flex', background: t.bg3, borderRadius: 8, padding: 3, flexShrink: 0 }}>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          <div style={{ display: 'flex', background: t.bg3, borderRadius: 8, padding: 3 }}>
             {[['feed','피드'],['members','멤버'],['creators','감독·작가']].map(([v, label]) => (
               <button key={v} style={tabStyle(view === v)} onClick={() => setView(v)}>{label}</button>
             ))}
           </div>
           <button
             onClick={() => setShowSettings(true)}
-            style={{ width: 32, height: 32, borderRadius: 8, border: `0.5px solid ${t.iconBorder}`, background: 'transparent', color: t.iconColor, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, padding: 0 }}
+            style={{ width: 30, height: 30, borderRadius: 8, border: `0.5px solid ${t.iconBorder}`, background: 'transparent', color: t.iconColor, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, padding: 0 }}
           >
-            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
               <path d="M10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"/>
               <path d="M16.2 10c0-.3 0-.6-.1-.9l1.9-1.5-1.8-3.1-2.2.9c-.5-.4-1-.7-1.6-.9L12 2h-4l-.4 2.5c-.6.2-1.1.5-1.6.9l-2.2-.9L2 7.6l1.9 1.5c0 .3-.1.6-.1.9s0 .6.1.9L2 12.4l1.8 3.1 2.2-.9c.5.4 1 .7 1.6.9L8 18h4l.4-2.5c.6-.2 1.1-.5 1.6-.9l2.2.9 1.8-3.1-1.9-1.5c.1-.3.1-.6.1-.9Z"/>
             </svg>
           </button>
-          {/* 프로필 아이콘 — 클릭 시 프로필 모달 */}
           <img
             src={user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || 'U')}&background=random`}
             alt="me"
-            title="프로필"
             onClick={() => setShowProfile(true)}
-            style={{ width: 30, height: 30, borderRadius: '50%', cursor: 'pointer', border: `1.5px solid ${t.line2}`, flexShrink: 0 }}
+            style={{ width: 28, height: 28, borderRadius: '50%', cursor: 'pointer', border: `1.5px solid ${t.line2}`, flexShrink: 0 }}
           />
         </div>
       </div>
@@ -158,7 +200,7 @@ export default function App() {
             <div style={{ display: 'flex', alignItems: 'center', background: t.searchBg, border: `0.5px solid ${t.searchBorder}`, borderRadius: 8, overflow: 'hidden', height: 36 }}>
               <div style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke={t.searchIco} strokeWidth="1.6">
-                  <circle cx="6.8" cy="6.8" r="4.2" /><path d="M10 10l3 3" />
+                  <circle cx="6.8" cy="6.8" r="4.2"/><path d="M10 10l3 3"/>
                 </svg>
               </div>
               <input
@@ -194,7 +236,7 @@ export default function App() {
 
       <div style={{ flex: 1, paddingBottom: 90 }}>
         {view === 'feed' && <FeedPage works={works} t={t} acc={acc} movieColor={movieColor} bookColor={bookColor} currentUser={user} onAddReview={handleAddReview} filter={filter} sort={sort} search={search} />}
-        {view === 'members' && <MembersPage works={works} t={t} acc={acc} movieColor={movieColor} bookColor={bookColor} />}
+        {view === 'members' && <MembersPage works={works} t={t} acc={acc} movieColor={movieColor} bookColor={bookColor} groupMembers={currentGroup.members} />}
         {view === 'creators' && <CreatorsPage works={works} t={t} acc={acc} movieColor={movieColor} bookColor={bookColor} />}
       </div>
 
@@ -206,7 +248,7 @@ export default function App() {
         onMouseLeave={e => e.currentTarget.style.opacity = '1'}
       >
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-          <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
         </svg>
       </button>
 
