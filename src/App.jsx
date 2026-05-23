@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { onAuthStateChanged } from 'firebase/auth'
 import {
   collection, onSnapshot, addDoc, updateDoc, doc,
-  query, orderBy, where,
+  query, where,
 } from 'firebase/firestore'
 import { auth, db } from './lib/firebase'
 import { THEMES, ACC_LIST, POSTER_COLORS } from './lib/theme'
@@ -61,11 +61,13 @@ export default function App() {
     if (!user || !currentGroup) return
     const q = query(
       collection(db, 'works'),
-      where('groupId', '==', currentGroup.id),
-      orderBy('createdAt', 'desc')
+      where('groupId', '==', currentGroup.id)
     )
     return onSnapshot(q, snap => {
-      setWorks(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+      const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      // 클라이언트에서 정렬 (인덱스 불필요)
+      docs.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+      setWorks(docs)
     })
   }, [user, currentGroup])
 
