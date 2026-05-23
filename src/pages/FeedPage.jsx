@@ -1,6 +1,6 @@
 import WorkCard from '../components/WorkCard'
 
-export default function FeedPage({ works, t, acc, movieColor, bookColor, animeColor, currentUser, onAddReview, filter, sort, search }) {
+export default function FeedPage({ works, t, acc, movieColor, bookColor, animeColor, currentUser, onAddReview, onDeleteWork, onDeleteReview, onUpdateWork, filter, sort, search }) {
   const filtered = works
     .filter(w => filter === 'all' || w.type === filter)
     .filter(w => !search || w.title.toLowerCase().includes(search.toLowerCase()) || w.creator.toLowerCase().includes(search.toLowerCase()))
@@ -30,6 +30,9 @@ export default function FeedPage({ works, t, acc, movieColor, bookColor, animeCo
           animeColor={animeColor}
           currentUser={currentUser}
           onAddReview={onAddReview}
+          onDeleteWork={onDeleteWork}
+          onDeleteReview={onDeleteReview}
+          onUpdateWork={onUpdateWork}
         />
       ))}
     </div>

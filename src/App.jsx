@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { onAuthStateChanged } from 'firebase/auth'
 import {
-  collection, onSnapshot, addDoc, updateDoc, doc,
+  collection, onSnapshot, addDoc, updateDoc, doc, deleteDoc,
   query, where,
 } from 'firebase/firestore'
 import { auth, db } from './lib/firebase'
@@ -101,7 +101,20 @@ export default function App() {
     })
   }
 
-  const handleAddReview = async (workId, { score, text }) => {
+  const handleUpdateWork = async (workId, updates) => {
+    await updateDoc(doc(db, 'works', workId), updates)
+  }
+
+  const handleDeleteWork = async (workId) => {
+    await deleteDoc(doc(db, 'works', workId))
+  }
+
+  const handleDeleteReview = async (workId) => {
+    const workRef = doc(db, 'works', workId)
+    const work = works.find(w => w.id === workId)
+    const reviews = (work?.reviews || []).filter(r => r.userId !== user.uid)
+    await updateDoc(workRef, { reviews })
+  }
     const workRef = doc(db, 'works', workId)
     const work = works.find(w => w.id === workId)
     // 그룹 프로필 우선 사용
@@ -244,7 +257,7 @@ export default function App() {
       )}
 
       <div style={{ flex: 1, paddingBottom: 90 }}>
-        {view === 'feed' && <FeedPage works={works} t={t} acc={acc} movieColor={movieColor} bookColor={bookColor} animeColor={animeColor} currentUser={user} onAddReview={handleAddReview} filter={filter} sort={sort} search={search} />}
+        {view === 'feed' && <FeedPage works={works} t={t} acc={acc} movieColor={movieColor} bookColor={bookColor} animeColor={animeColor} currentUser={user} onAddReview={handleAddReview} onDeleteWork={handleDeleteWork} onDeleteReview={handleDeleteReview} onUpdateWork={handleUpdateWork} filter={filter} sort={sort} search={search} />}
         {view === 'members' && <MembersPage works={works} t={t} acc={acc} movieColor={movieColor} bookColor={bookColor} animeColor={animeColor} groupMembers={currentGroup.members} />}
         {view === 'creators' && <CreatorsPage works={works} t={t} acc={acc} movieColor={movieColor} bookColor={bookColor} animeColor={animeColor} />}
       </div>
