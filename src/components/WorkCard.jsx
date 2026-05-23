@@ -32,7 +32,7 @@ export default function WorkCard({ work, t, acc, movieColor, bookColor, animeCol
   const tc = work.type === 'movie' ? movieColor : work.type === 'book' ? bookColor : animeColor
   const pc = POSTER_COLORS[work.colorIndex % POSTER_COLORS.length]
   const myReview = reviews.find(r => r.userId === currentUser?.uid)
-  const isMyWork = !work.addedBy || work.addedBy === currentUser?.uid
+  const isMyWork = true // 임시: 모든 사람에게 버튼 표시
   const typeLabel = work.type === 'movie' ? '영화' : work.type === 'book' ? '책' : '애니'
 
   const handleSubmit = async () => {
