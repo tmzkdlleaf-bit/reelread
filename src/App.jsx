@@ -40,6 +40,7 @@ export default function App() {
   const [accIdx, setAccIdx] = useState(() => STORAGE.get('accIdx', 0))
   const [movieColor, setMovieColor] = useState(() => STORAGE.get('movieColor', '#7ab0e0'))
   const [bookColor, setBookColor] = useState(() => STORAGE.get('bookColor', '#90c97a'))
+  const [animeColor, setAnimeColor] = useState(() => STORAGE.get('animeColor', '#c47ac0'))
 
   const t = THEMES[theme]
   const acc = ACC_LIST[accIdx]
@@ -79,6 +80,7 @@ export default function App() {
   useEffect(() => { STORAGE.set('accIdx', accIdx) }, [accIdx])
   useEffect(() => { STORAGE.set('movieColor', movieColor) }, [movieColor])
   useEffect(() => { STORAGE.set('bookColor', bookColor) }, [bookColor])
+  useEffect(() => { STORAGE.set('animeColor', animeColor) }, [animeColor])
 
   useEffect(() => {
     document.body.style.background = t.bg
@@ -213,9 +215,9 @@ export default function App() {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 20px', borderBottom: `0.5px solid ${t.line}`, flexWrap: 'wrap' }}>
             <span style={{ fontSize: 11, letterSpacing: '.06em', textTransform: 'uppercase', color: t.muted, marginRight: 2 }}>유형</span>
-            {[['all','전체'],['movie','영화'],['book','책']].map(([f, label]) => (
+            {[['all','전체'],['movie','영화'],['book','책'],['anime','애니']].map(([f, label]) => (
               <button key={f} style={pillStyle(filter === f)} onClick={() => setFilter(f)}>
-                {f !== 'all' && <span style={{ width: 7, height: 7, borderRadius: '50%', background: f === 'movie' ? movieColor : bookColor }} />}
+                {f !== 'all' && <span style={{ width: 7, height: 7, borderRadius: '50%', background: f === 'movie' ? movieColor : f === 'book' ? bookColor : animeColor }} />}
                 {label}
               </button>
             ))}
@@ -235,9 +237,9 @@ export default function App() {
       )}
 
       <div style={{ flex: 1, paddingBottom: 90 }}>
-        {view === 'feed' && <FeedPage works={works} t={t} acc={acc} movieColor={movieColor} bookColor={bookColor} currentUser={user} onAddReview={handleAddReview} filter={filter} sort={sort} search={search} />}
-        {view === 'members' && <MembersPage works={works} t={t} acc={acc} movieColor={movieColor} bookColor={bookColor} groupMembers={currentGroup.members} />}
-        {view === 'creators' && <CreatorsPage works={works} t={t} acc={acc} movieColor={movieColor} bookColor={bookColor} />}
+        {view === 'feed' && <FeedPage works={works} t={t} acc={acc} movieColor={movieColor} bookColor={bookColor} animeColor={animeColor} currentUser={user} onAddReview={handleAddReview} filter={filter} sort={sort} search={search} />}
+        {view === 'members' && <MembersPage works={works} t={t} acc={acc} movieColor={movieColor} bookColor={bookColor} animeColor={animeColor} groupMembers={currentGroup.members} />}
+        {view === 'creators' && <CreatorsPage works={works} t={t} acc={acc} movieColor={movieColor} bookColor={bookColor} animeColor={animeColor} />}
       </div>
 
       {/* FAB */}
@@ -253,13 +255,13 @@ export default function App() {
       </button>
 
       {showSettings && (
-        <SettingsModal t={t} acc={acc} theme={theme} movieColor={movieColor} bookColor={bookColor}
+        <SettingsModal t={t} acc={acc} theme={theme} movieColor={movieColor} bookColor={bookColor} animeColor={animeColor}
           onTheme={setTheme} onAccent={setAccIdx}
-          onTypeColor={(key, c) => key === 'movie' ? setMovieColor(c) : setBookColor(c)}
+          onTypeColor={(key, c) => key === 'movie' ? setMovieColor(c) : key === 'book' ? setBookColor(c) : setAnimeColor(c)}
           onClose={() => setShowSettings(false)} />
       )}
       {showAddWork && (
-        <AddWorkModal t={t} acc={acc} movieColor={movieColor} bookColor={bookColor} onAdd={handleAddWork} onClose={() => setShowAddWork(false)} />
+        <AddWorkModal t={t} acc={acc} movieColor={movieColor} bookColor={bookColor} animeColor={animeColor} onAdd={handleAddWork} onClose={() => setShowAddWork(false)} />
       )}
       {showProfile && (
         <ProfileModal user={user} t={t} acc={acc} works={works} onClose={() => setShowProfile(false)} />

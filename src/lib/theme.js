@@ -38,3 +38,10 @@ export const POSTER_COLORS = [
   { bg: '#2f1e1a', fg: '#e09070' }, { bg: '#1a2535', fg: '#7ab0e0' },
   { bg: '#2e2018', fg: '#d4a060' }, { bg: '#1f2a2e', fg: '#72c4c0' },
 ]
+
+// 타입별 설정
+export const WORK_TYPES = {
+  movie: { label: '영화', creatorLabel: '감독' },
+  book:  { label: '책',   creatorLabel: '작가' },
+  anime: { label: '애니', creatorLabel: '원작자 / 감독' },
+}

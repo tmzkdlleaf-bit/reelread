@@ -13,7 +13,7 @@ function avg(reviews) {
   return reviews.reduce((s, r) => s + r.score, 0) / reviews.length
 }
 
-export default function CreatorsPage({ works, t, acc, movieColor, bookColor }) {
+export default function CreatorsPage({ works, t, acc, movieColor, bookColor, animeColor }) {
   const [selected, setSelected] = useState(null)
 
   const creatorsMap = {}
@@ -35,7 +35,7 @@ export default function CreatorsPage({ works, t, acc, movieColor, bookColor }) {
         {creator.works.map(w => {
           const a = avg(w.reviews)
           const pc = POSTER_COLORS[w.colorIndex % POSTER_COLORS.length]
-          const tc = w.type === 'movie' ? movieColor : bookColor
+          const tc = w.type === 'movie' ? movieColor : w.type === 'book' ? bookColor : animeColor
           return (
             <div key={w.id} style={{ padding: '18px 20px', borderBottom: `0.5px solid ${t.line}` }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
@@ -44,7 +44,7 @@ export default function CreatorsPage({ works, t, acc, movieColor, bookColor }) {
                   {w.title.slice(0, 2)}
                 </div>
                 <div>
-                  <div style={{ fontSize: 10, letterSpacing: '.07em', textTransform: 'uppercase', color: tc, marginBottom: 4 }}>{w.type === 'movie' ? '영화' : '책'}</div>
+                  <div style={{ fontSize: 10, letterSpacing: '.07em', textTransform: 'uppercase', color: tc, marginBottom: 4 }}>{w.type === 'movie' ? '영화' : w.type === 'book' ? '책' : '애니'}</div>
                   <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 16, color: t.text }}>{w.title}</div>
                   {a > 0 && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 5 }}>

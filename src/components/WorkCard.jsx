@@ -13,7 +13,7 @@ function avgScore(reviews) {
   return reviews.reduce((s, r) => s + r.score, 0) / reviews.length
 }
 
-export default function WorkCard({ work, t, acc, movieColor, bookColor, currentUser, onAddReview }) {
+export default function WorkCard({ work, t, acc, movieColor, bookColor, animeColor, currentUser, onAddReview }) {
   const [open, setOpen] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [score, setScore] = useState(0)
@@ -22,7 +22,7 @@ export default function WorkCard({ work, t, acc, movieColor, bookColor, currentU
 
   const reviews = work.reviews || []
   const avg = avgScore(reviews)
-  const tc = work.type === 'movie' ? movieColor : bookColor
+  const tc = work.type === 'movie' ? movieColor : work.type === 'book' ? bookColor : animeColor
   const pc = POSTER_COLORS[work.colorIndex % POSTER_COLORS.length]
   const myReview = reviews.find(r => r.userId === currentUser?.uid)
 
@@ -64,7 +64,7 @@ export default function WorkCard({ work, t, acc, movieColor, bookColor, currentU
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', fontSize: 10, letterSpacing: '.07em', textTransform: 'uppercase', color: t.muted, marginBottom: 5 }}>
             <span style={{ width: 7, height: 7, borderRadius: '50%', background: tc, display: 'inline-block', marginRight: 5 }} />
-            {work.type === 'movie' ? '영화' : '책'}
+            {work.type === 'movie' ? '영화' : work.type === 'book' ? '책' : '애니'}
           </div>
           <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 18, lineHeight: 1.25, marginBottom: 3, color: t.text }}>{work.title}</div>
           <div style={{ fontSize: 12, color: t.muted, marginBottom: 10 }}>{work.creator}</div>
