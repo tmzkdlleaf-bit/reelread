@@ -48,8 +48,13 @@ export default function App() {
 
   // Auth
   useEffect(() => {
-    // 리디렉트 로그인 결과 처리
-    getRedirectResult(auth).catch(() => {})
+    // 리디렉트 로그인 결과 먼저 처리
+    getRedirectResult(auth)
+      .then(result => {
+        if (result?.user) setUser(result.user)
+      })
+      .catch(() => {})
+    // 이후 auth 상태 구독
     return onAuthStateChanged(auth, u => setUser(u))
   }, [])
 

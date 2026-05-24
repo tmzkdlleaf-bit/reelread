@@ -1,12 +1,21 @@
-import { signInWithRedirect } from 'firebase/auth'
+import { signInWithPopup, signInWithRedirect } from 'firebase/auth'
 import { auth, googleProvider } from '../lib/firebase'
 
 export default function LoginPage({ t, acc }) {
   const handleLogin = async () => {
     try {
-      await signInWithRedirect(auth, googleProvider)
+      // 팝업 먼저 시도, 실패하면 리디렉트
+      await signInWithPopup(auth, googleProvider)
     } catch (e) {
-      alert('로그인 실패: ' + e.message)
+      if (e.code === 'auth/popup-blocked' || e.code === 'auth/popup-closed-by-user') {
+        try {
+          await signInWithRedirect(auth, googleProvider)
+        } catch (e2) {
+          alert('로그인 실패: ' + e2.message)
+        }
+      } else if (e.code !== 'auth/cancelled-popup-request') {
+        alert('로그인 실패: ' + e.message)
+      }
     }
   }
 
@@ -29,7 +38,7 @@ export default function LoginPage({ t, acc }) {
 
       <button
         onClick={handleLogin}
-        style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 24px', borderRadius: 12, border: `0.5px solid ${t.line2}`, background: t.bg2, color: t.text, fontSize: 14, fontWeight: 500 }}
+        style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 24px', borderRadius: 12, border: `0.5px solid ${t.line2}`, background: t.bg2, color: t.text, fontSize: 14, fontWeight: 500, cursor: 'pointer' }}
         onMouseEnter={e => e.currentTarget.style.opacity = '0.8'}
         onMouseLeave={e => e.currentTarget.style.opacity = '1'}
       >
