@@ -22,6 +22,7 @@ export default function WorkCard({ work, t, acc, movieColor, bookColor, animeCol
   const [score, setScore] = useState(0)
   const [text, setText] = useState('')
   const [memo, setMemo] = useState('')
+  const [hoverStar, setHoverStar] = useState(0)
   const [editTitle, setEditTitle] = useState(work.title)
   const [editCreator, setEditCreator] = useState(work.creator)
   const [showZoom, setShowZoom] = useState(false)
