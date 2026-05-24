@@ -21,7 +21,7 @@ export default function WorkCard({ work, t, acc, movieColor, bookColor, animeCol
   const [showEdit, setShowEdit] = useState(false)
   const [score, setScore] = useState(0)
   const [text, setText] = useState('')
-  const [hoverStar, setHoverStar] = useState(0)
+  const [memo, setMemo] = useState('')
   const [editTitle, setEditTitle] = useState(work.title)
   const [editCreator, setEditCreator] = useState(work.creator)
   const [showZoom, setShowZoom] = useState(false)
@@ -39,8 +39,8 @@ export default function WorkCard({ work, t, acc, movieColor, bookColor, animeCol
   const handleSubmit = async () => {
     if (!score) return alert('별점을 선택해주세요')
     if (!text.trim()) return alert('감상평을 입력해주세요')
-    await onAddReview(work.id, { score, text: text.trim() })
-    setScore(0); setText(''); setShowForm(false)
+    await onAddReview(work.id, { score, text: text.trim(), memo: memo.trim() })
+    setScore(0); setText(''); setMemo(''); setShowForm(false)
   }
 
   const handleDeleteWork = () => {
@@ -205,12 +205,18 @@ export default function WorkCard({ work, t, acc, movieColor, bookColor, animeCol
                 )}
               </div>
               <div style={{ fontSize: 13, color: t.text, opacity: .88, lineHeight: 1.65 }}>{r.text}</div>
+              {r.memo && (
+                <div style={{ marginTop: 8, padding: '8px 12px', background: t.bg3, borderRadius: 6, borderLeft: `2px solid ${acc.c}` }}>
+                  <div style={{ fontSize: 10, letterSpacing: '.06em', textTransform: 'uppercase', color: acc.c, marginBottom: 4 }}>인상 깊은 장면 · 대사</div>
+                  <div style={{ fontSize: 12, color: t.text, opacity: .8, lineHeight: 1.65, fontStyle: 'italic' }}>"{r.memo}"</div>
+                </div>
+              )}
             </div>
           ))}
 
           {!showForm ? (
             <button
-              onClick={() => { setShowForm(true); setScore(myReview?.score || 0); setText(myReview?.text || '') }}
+              onClick={() => { setShowForm(true); setScore(myReview?.score || 0); setText(myReview?.text || ''); setMemo(myReview?.memo || '') }}
               style={{ display: 'block', width: 'calc(100% - 108px)', margin: '0 20px 14px 88px', padding: 9, borderRadius: 7, border: `0.5px dashed ${t.line2}`, background: 'none', color: t.muted, fontSize: 12, textAlign: 'center', letterSpacing: '.03em', cursor: 'pointer' }}
             >
               + {myReview ? '내 감상평 수정' : '내 감상평 남기기'}
@@ -226,7 +232,9 @@ export default function WorkCard({ work, t, acc, movieColor, bookColor, animeCol
                 ))}
               </div>
               <textarea value={text} onChange={e => setText(e.target.value)} placeholder="한 줄로 남기는 솔직한 감상..." rows={2}
-                style={{ width: '100%', background: t.bg3, border: `0.5px solid ${t.line2}`, borderRadius: 8, padding: '10px 12px', color: t.text, fontSize: 13, resize: 'none', outline: 'none', marginBottom: 10, fontFamily: "'DM Sans', sans-serif" }} />
+                style={{ width: '100%', background: t.bg3, border: `0.5px solid ${t.line2}`, borderRadius: 8, padding: '10px 12px', color: t.text, fontSize: 13, resize: 'none', outline: 'none', marginBottom: 8, fontFamily: "'DM Sans', sans-serif" }} />
+              <textarea value={memo} onChange={e => setMemo(e.target.value)} placeholder="인상 깊었던 장면이나 대사 (선택)" rows={2}
+                style={{ width: '100%', background: t.bg3, border: `0.5px solid ${t.line2}`, borderRadius: 8, padding: '10px 12px', color: t.text, fontSize: 13, resize: 'none', outline: 'none', marginBottom: 10, fontFamily: "'DM Sans', sans-serif", borderLeft: `2px solid ${acc.c}` }} />
               <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                 <button onClick={() => setShowForm(false)} style={{ padding: '7px 14px', borderRadius: 7, border: `0.5px solid ${t.line2}`, background: 'none', color: t.muted, fontSize: 12, cursor: 'pointer' }}>취소</button>
                 <button onClick={handleSubmit} style={{ padding: '7px 14px', borderRadius: 7, border: 'none', background: acc.c, color: '#1a1208', fontSize: 12, fontWeight: 500, cursor: 'pointer' }}>남기기</button>

@@ -28,11 +28,10 @@ export default function GroupLobby({ user, groups, t, acc, onSelectGroup }) {
 
   const getDisplayProfile = (group) => {
     const p = myProfiles[group.id]
-    return {
-      name: p?.name || user.displayName || user.email,
-      photo: p?.photoURL || user.photoURL ||
-        `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || 'U')}&background=random`,
-    }
+    // p가 null이면 아직 로딩 중이거나 설정 안 된 것 → Google 기본값 사용
+    const name = (p && p.name) ? p.name : (user.displayName || user.email || 'Unknown')
+    const photo = (p && p.photoURL) ? p.photoURL : (user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || 'U')}&background=random`)
+    return { name, photo }
   }
 
   const inputStyle = {

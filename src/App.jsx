@@ -123,7 +123,7 @@ export default function App() {
     await updateDoc(workRef, { reviews })
   }
 
-  const handleAddReview = async (workId, { score, text }) => {
+  const handleAddReview = async (workId, { score, text, memo }) => {
     const workRef = doc(db, 'works', workId)
     const work = works.find(w => w.id === workId)
     let userName = user.displayName || user.email
@@ -134,7 +134,7 @@ export default function App() {
       if (groupProfile?.photoURL) userPhoto = groupProfile.photoURL
     } catch (e) {}
     const reviews = (work?.reviews || []).filter(r => r.userId !== user.uid)
-    reviews.unshift({ userId: user.uid, userName, userPhoto, score, text, createdAt: Date.now() })
+    reviews.unshift({ userId: user.uid, userName, userPhoto, score, text, memo: memo || '', createdAt: Date.now() })
     await updateDoc(workRef, { reviews })
   }
 
